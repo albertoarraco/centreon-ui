@@ -17,6 +17,7 @@ const buildEntities = (from) => {
     .map((_, index) => ({
       id: from + index,
       name: `Entity ${from + index}`,
+      alias: `Entity alias ${from + index}`,
     }));
 };
 
@@ -83,6 +84,22 @@ export const single = (): JSX.Element => (
       return getEndpoint({ endpoint: baseEndpoint, parameters });
     }}
     getOptionsFromResult={(result): Array<SelectEntry> => result}
+    placeholder="Type here..."
+  />
+);
+
+const getOptionsFromResult = (result): Array<SelectEntry> =>
+  result.map(({ id, alias }) => ({ id, name: alias }));
+
+export const singleWithACustomProperty = (): JSX.Element => (
+  <SingleConnectedAutocompleteField
+    label="Single Connected Autocomplete"
+    field="host.alias"
+    initialPage={1}
+    getEndpoint={(parameters) => {
+      return getEndpoint({ endpoint: baseEndpoint, parameters });
+    }}
+    getOptionsFromResult={getOptionsFromResult}
     placeholder="Type here..."
   />
 );

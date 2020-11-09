@@ -11,6 +11,8 @@ import {
 import { act } from 'react-test-renderer';
 import SingleAutocompleteField from './Single';
 import buildListingEndpoint from '../../../../api/buildListingEndpoint';
+import { ConnectedAutocompleteProps } from '.';
+import { SelectEntry } from '../..';
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -25,8 +27,8 @@ const placeholder = 'Type here...';
 
 const optionsData = {
   result: [
-    { id: 0, name: 'My Option 1' },
-    { id: 1, name: 'My Option 2' },
+    { id: 0, name: 'My Option 1', alias: 'My Option alias 1' },
+    { id: 1, name: 'My Option 2', alias: 'My Option alias 2' },
   ],
   meta: {
     pagination: {
@@ -42,7 +44,9 @@ const getEndpoint = (parameters): string => {
   return buildListingEndpoint({ baseEndpoint, parameters });
 };
 
-const renderSingleAutocompleteField = (): RenderResult =>
+const renderSingleAutocompleteField = ({
+  getOptionsFromResult,
+}: Pick<ConnectedAutocompleteProps, 'getOptionsFromResult'>): RenderResult =>
   render(
     <SingleAutocompleteField
       label={label}
@@ -50,6 +54,7 @@ const renderSingleAutocompleteField = (): RenderResult =>
       getEndpoint={getEndpoint}
       field="host.name"
       placeholder="Type here..."
+      getOptionsFromResult={getOptionsFromResult}
     />,
   );
 
@@ -65,7 +70,7 @@ describe(SingleAutocompleteField, () => {
   });
 
   it('populates options with the first page result of get call from endpoint', async () => {
-    const { getByLabelText, getByText } = renderSingleAutocompleteField();
+    const { getByLabelText, getByText } = renderSingleAutocompleteField({});
 
     act(() => {
       fireEvent.click(getByLabelText('Open'));
@@ -81,11 +86,24 @@ describe(SingleAutocompleteField, () => {
     });
   });
 
+  it('populates options with a customized name property of the first page result of get call from endpoint', async () => {
+    const { getByLabelText, getByText } = renderSingleAutocompleteField({
+      getOptionsFromResult: (result): Array<SelectEntry> =>
+        result.map(({ id, alias }) => ({ id, name: alias })),
+    });
+
+    fireEvent.click(getByLabelText('Open'));
+
+    await waitFor(() => {
+      expect(getByText('My Option alias 1'));
+    });
+  });
+
   it('populates options with the first page result of the get call from the endpoint after typing something in input field', async () => {
     const {
       getByLabelText,
       getByPlaceholderText,
-    } = renderSingleAutocompleteField();
+    } = renderSingleAutocompleteField({});
 
     act(() => {
       fireEvent.click(getByLabelText('Open'));

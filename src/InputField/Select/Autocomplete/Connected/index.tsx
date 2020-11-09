@@ -17,12 +17,14 @@ import useRequest from '../../../../api/useRequest';
 import { getData } from '../../../../api';
 import useIntersectionObserver from '../../../../utils/useIntersectionObserver';
 import { ListingModel } from '../../../..';
+import { SelectEntry } from '../..';
 
-interface Props {
+export interface ConnectedAutocompleteProps {
   getEndpoint: ({ search, page }) => string;
   field: string;
   initialPage: number;
   paginationPath?: Array<string>;
+  getOptionsFromResult?: (result) => Array<SelectEntry>;
 }
 
 type SearchDebounce = (value: string) => void;
@@ -45,9 +47,12 @@ const ConnectedAutocompleteField = (
     getEndpoint,
     field,
     paginationPath = [],
+    getOptionsFromResult = (result) =>
+      result.map(({ id, name }) => ({ id, name })),
     ...props
-  }: Props & Omit<AutocompleteFieldProps, 'options'>): JSX.Element => {
-    const [options, setOptions] = React.useState<Array<TData>>([]);
+  }: ConnectedAutocompleteProps &
+    Omit<AutocompleteFieldProps, 'options'>): JSX.Element => {
+    const [options, setOptions] = React.useState<Array<SelectEntry>>([]);
     const [optionsOpen, setOptionsOpen] = React.useState<boolean>(false);
     const [searchValue, setSearchValue] = React.useState<string>('');
     const [page, setPage] = React.useState(1);
@@ -66,7 +71,10 @@ const ConnectedAutocompleteField = (
     const loadOptions = ({ endpoint, loadMore = false }) => {
       sendRequest(endpoint).then(({ result, meta }) => {
         const moreOptions = loadMore ? options : [];
-        setOptions(moreOptions.concat(result));
+
+        const formattedResult = getOptionsFromResult(result);
+
+        setOptions(moreOptions.concat(formattedResult));
 
         const total = getPaginationProperty({ meta, prop: 'total' }) || 1;
         const limit = getPaginationProperty({ meta, prop: 'limit' }) || 1;
